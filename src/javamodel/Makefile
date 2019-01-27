@@ -1,18 +1,16 @@
 
-all: Helloworld
+all: DongziYear
+
+x: DongziYear
 	java $^
 
-
-go: Helloworld
+go: DongziYear
 	java $^ >test.log
 	
-
-Helloworld: Helloworld.class
-
+DongziYear: DongziYear.class
 
 %.class: %.java
 	javac $^
 
 clean:
 	rm -rf *.class
-
