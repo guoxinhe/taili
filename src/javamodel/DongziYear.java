@@ -93,11 +93,32 @@ public class DongziYear{
 		//sb.append("玄黄流日：#"+xhDay + " 流年#"+xhYearId+" 12/23 1/365\n");
 		sb.append("冬至表格：#"+ seekTableIndex + " avg="+dzAverageYearLength[seekTableIndex]+"\n");
 		sb.append("    xhDay=#"+seekYearPos+" dzOffset="+seekYearDoubleOffset+" days="+seekYearLength+"\n"
-				+"    "+seekYearDoublePos+" to "+seekYearDoubleNextPos);
+				+"    "+JiaziName[jiaziFromDay(seekYearPos)]
+				+"日  "+seekYearDoublePos+" to "+seekYearDoubleNextPos);
 		return sb.toString();
     }
 
   //----------------计日历部分
+    public static final String[] JiaziName = {
+        //"0A","0B","0C","0D","0E","0F","0G","0H","0I","0J",
+        //"1K","1L","1A","1B","1C","1D","1E","1F","1G","1H",
+        //"2I","2J","2K","2L","2A","2B","2C","2D","2E","2F",
+        //"3G","3H","3I","3J","3K","3L","3A","3B","3C","3D",
+        //"4E","4F","4G","4H","4I","4J","4K","4L","4A","4B",
+        //"5C","5D","5E","5F","5G","5H","5I","5J","5K","5L",
+        "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉",
+        "甲戌","乙亥","丙子","丁丑","戊寅","己卯","庚辰","辛巳","壬午","癸未",
+        "甲申","乙酉","丙戌","丁亥","戊子","己丑","庚寅","辛卯","壬辰","癸巳",
+        "甲午","乙未","丙申","丁酉","戊戌","己亥","庚子","辛丑","壬寅","癸卯",
+        "甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥","壬子","癸丑",
+        "甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥",
+
+        "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉","甲戌","乙亥",
+        "丙子","丁丑","戊寅","己卯","庚辰","辛巳","壬午","癸未","甲申","乙酉","丙戌","丁亥",
+        "戊子","己丑","庚寅","辛卯","壬辰","癸巳","甲午","乙未","丙申","丁酉","戊戌","己亥",
+        "庚子","辛丑","壬寅","癸卯","甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥",
+        "壬子","癸丑","甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥",
+    };
     //玄黄日推算甲子日
     public static int jiaziFromDay(long xhDayPosInput) {
         return (int)((xhDayPosInput+7)%60);
@@ -455,7 +476,7 @@ public class DongziYear{
     }
     private boolean oliShowJulianMode=false;//julianMode:儒略历模式：只要是4的倍数，都是闰年。
     private int oliShowYear=1,oliShowMonth=12, oliShowDay=22;//基数都是1，参见setYearMonthDay。
-    private int oliShowDayYearOffset=0;//基于0
+    private int oliShowDayYearOffset=0;//基于0，一年内的天数，0~365
     private long oliShowAccDays=0;//基于0，这天之前的所有天数。也是这天的offset.
     private boolean oliShowIsLeapYear=false;//是不是闰年
     void oliShowSyncDays() {
@@ -582,7 +603,18 @@ public class DongziYear{
             xiyuanYearLength = 355;
         xiyuanStartAccDayPos = xhDayPos- XH_JESUS_START_DAY;
     }
-    
+	public String toOliString() {
+		StringBuilder sb=new StringBuilder();
+		oliShowSyncDays();
+		if(oliShowYear>0)
+			sb.append("西元纪年："+oliShowYear+"年");
+		else
+			sb.append("西前纪年："+(1-oliShowYear)+"年");
+		sb.append(""+oliShowMonth+"月"+oliShowDay+"日 #"+oliShowAccDays+" day");
+
+		return sb.toString();
+	}
+
     //以下都是算法数据，都基于0,显示给用户时请自行转换为基于1的。
     public long xhDayPos;//对应的玄黄历的天数拉位置。
     public long julianStartAccDayPos, julianYear, julianMomth, julianDay, julianYoff, julianYearLength;
@@ -709,6 +741,104 @@ public class DongziYear{
 		return sb.toString();
 	}
 
+    public static final int LUNER_DAY_DIV940 =940;
+    public static final int LUNER_DAY_MOD499 =499;
+    public static final int LUNER_SUO_LEN=940*29+499;//=27759
+    public static final int SU_PIECES=27759;
+    public static final int BU_DAYS=27759;
+    public static final int suStarts[]=new int[940];
+    public static final int suAccs[]=new int[940];
+    private static boolean suTableInitialized =false;
+    public static void initSuTable() {
+        if(suTableInitialized)
+            return;
+        suTableInitialized =true;
+
+        int i;
+        for(i=0;i<940;i++) {
+            int suPiecePos=i*SU_PIECES;
+            int suDayPos=suPiecePos/ LUNER_DAY_DIV940;
+            int suStart=suPiecePos% LUNER_DAY_DIV940;
+            int suAcc= LUNER_DAY_DIV940 -suStart;
+            suStarts[suStart]=i;
+            suAccs[suAcc-1]=i;
+            if(suAcc<= LUNER_DAY_MOD499) {//30 days
+                //Log.e("xinhe", " "+i+" 30, "+suStart +", "+suAcc);
+            } else { //29 days
+                //Log.e("xinhe", " "+i+" 29, "+suStart +", "+suAcc);
+            }
+        }
+    }
+    /**
+     * 向后推算某年的朔分值。
+     * @param baseDayPos 参考流日
+     * @param baseSuAcc 参考流日所在的朔月的朔日的累计朔分值
+     * @param targetDayPos 目标参考流日
+     * @return targetSuAcc, -939 ~ LUNER_SUO_LEN-940， 参考流日所在的朔月的朔日的累计朔分值
+     */
+    public static long getSuAcc(long baseDayPos, long baseSuAcc, long targetDayPos) {
+        if(targetDayPos<=baseDayPos)
+            return baseSuAcc;
+
+        long days=targetDayPos-baseDayPos;//先算出差数
+        days=days%BU_DAYS;//去年整数部分：每一蔀4章，76年，940月，27759日
+
+        long piece=days*940+baseSuAcc;//将剩余的部分转化为朔分
+        piece=piece%LUNER_SUO_LEN;//再将余下的去年整朔月部分。
+        if(piece>LUNER_SUO_LEN-940)//调整到当月朔分所在的范围。
+            piece-=LUNER_SUO_LEN;
+        return piece;
+    }
+    public long baseDayPos, baseSuAcc, targetDayPos, targetDayAcc;
+    public int suDay, suIndex, suFirstDayAcc,suMills,suSeconds;
+    public boolean suIsBig;
+    public int loadSuAcc(long baseDayPos, long baseSuAcc, long targetDayPos) {
+        this.baseDayPos=baseDayPos;
+        this.baseSuAcc=baseSuAcc;
+        this.targetDayPos=targetDayPos;
+        this.targetDayAcc=getSuAcc(baseDayPos, baseSuAcc, targetDayPos);
+        suDay=(int)(targetDayAcc+939)/940;
+        suIndex=0;
+        suFirstDayAcc=(int)((targetDayAcc+940)%940);
+        if(suFirstDayAcc==0)
+            suFirstDayAcc=940;
+        suMills=(86400000*(940-suFirstDayAcc)/940);//maybe overflow, not use it.
+        suSeconds=(86400*(940-suFirstDayAcc)/940);
+        suIsBig=suFirstDayAcc<=499;
+        return suDay;
+    }
+    public int advanceSuDay() {
+        targetDayAcc += LUNER_DAY_DIV940;
+        //implement suDay=(int)(targetDayAcc+939)/940;
+        if(targetDayAcc<=LUNER_SUO_LEN- LUNER_DAY_DIV940) {//this month
+            suDay++;
+        } else {//next su
+            targetDayAcc-=LUNER_SUO_LEN;
+            suDay=0;
+            suIndex++;
+
+            suFirstDayAcc=(int)((targetDayAcc+940)%940);
+            if(suFirstDayAcc==0)
+                suFirstDayAcc=940;
+            suMills=(86400000*(940-suFirstDayAcc)/940);
+            suIsBig=suFirstDayAcc<=499;
+        }
+        return suDay;
+    }
+	public String toSuString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append("朔望阴历：冬月"+(suIsBig?"大":"小")+" "+(suDay+1)+"日，朔点："
+		    +secToTime(suSeconds)+" 至始朔积："+targetDayAcc);
+		return sb.toString();
+	}
+	public String toStageTableItemString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append("查表基数："+dzYear+",  "+seekYearPos+",  "+dzSecond+",  "+targetDayAcc);
+		return sb.toString();
+	}
+	
+	
+	
     //----------------加载具体日期部分
     public long dzYear;//0 based;
 	public long dzSecond;//the first day's DZ start seconds.
@@ -721,11 +851,20 @@ public class DongziYear{
 		xhLoadDay(seekYearPos);
 		julianLoadXunahuangDay(seekYearPos);
 		dzSecond=(long)(86400*seekYearDoubleOffset);
+		loadSuAcc(seekYearSuBasePos,
+                seekYearSuBaseAcc,seekYearPos);
+	}
+	public String secToTime(long sec) {
+		int hour=(int)(sec/3600);
+		sec %=3600;
+		int minute=(int)(sec/60);
+		sec %=60;
+		return ""+hour+":"+minute+":"+sec;
 	}
 	public String toCompareString() {
 		StringBuilder sb=new StringBuilder();
 		//sb.append("玄黄流日：#"+xhDay + " 流年#"+xhYearId+" 12/23 1/365\n");
-		sb.append("冬至流年：#"+dzYear+" 冬至点"+dzSecond+"秒");
+		sb.append("冬至流年：#"+dzYear+" 冬至点 "+secToTime(dzSecond) +" ("+dzSecond+")秒");
 		return sb.toString();
 	}
 
@@ -747,6 +886,10 @@ public class DongziYear{
 			println(toXuanhuangString());
 			println(toJulianString());
 			println(toXiyuanString());
+			println(toOliString());
+			println(toSuString());
+			println(toStageTableItemString());
+			
 			println("\n");
 		}
 	}
@@ -754,6 +897,7 @@ public class DongziYear{
 	//Module test debug code
 	public static DongziYear thisInstance=null;
 	public static void main(String[] args){
+		initSuTable();
 		if(thisInstance==null)
 			thisInstance = new DongziYear();
 		System.out.println("冬至流年算法调试报表\n");
