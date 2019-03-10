@@ -5,7 +5,7 @@ public class DongziYear{
     public static final int SEARCH_STEP=4;//
     public static final long dzPosition[]={//天文台数据，基于东经120(呼伦贝尔|秦皇岛|青岛|杭州|丽水|台南)。
         //4个一组，分别表示：回归年，回归日，当天到冬至点的回归秒余，朔积。所有数据都是基于0.
-        //冬至年数，    玄黄日数，   回归余秒，    朔积
+        //冬至年数，    玄黄日数，                    回归余秒，           朔积
         //    0,    292756227,         0,        0, //0  //average year length=365.24220723187403
               0,    292734712,         0,        0, //0  //average year length=365.24300008682616
         2757783,   1300014953,         0,        0, //   黄帝历元，子时子正冬至，正朔，
@@ -88,13 +88,17 @@ public class DongziYear{
         seekYearSecondOffset=(long)(86400*(seekYearDoubleOffset));
         return seekYearPos;
     }
-    public String toSeekDzString() {
+    public String toZPositionTableString() {
 		StringBuilder sb=new StringBuilder();
 		//sb.append("玄黄流日：#"+xhDay + " 流年#"+xhYearId+" 12/23 1/365\n");
-		sb.append("冬至表格：#"+ seekTableIndex + " avg="+dzAverageYearLength[seekTableIndex]+"\n");
-		sb.append("    xhDay=#"+seekYearPos+" dzOffset="+seekYearDoubleOffset+" days="+seekYearLength+"\n"
-				+"    "+JiaziName[jiaziFromDay(seekYearPos)]
-				+"日  "+seekYearDoublePos+" to "+seekYearDoubleNextPos);
+		sb.append("所选表格：dzPosition【 #"+ seekTableIndex + " 】 冬至流年#"+dzPosition[seekTableIndex*SEARCH_STEP+1]+
+				" 玄黄日#"+dzPosition[seekTableIndex*SEARCH_STEP+1]+
+				" 年均长="+dzAverageYearLength[seekTableIndex]+"\n");
+		sb.append("查表流年：dzYear#" +dzYear+ "  年起玄黄日#"+seekYearPos+ " 年天数"+seekYearLength+"\n");
+		sb.append("　　　　　dzOffset="+seekYearDoubleOffset+" 前后年位置："+
+		          seekYearDoublePos+" to "+seekYearDoubleNextPos+"\n");
+		sb.append("玄黄流日："+JiaziName[jiaziFromDay(seekYearPos)]+"日 时起"
+				+ JiaziName[(int) jiaziFromJzDayId(jiaziFromDay(seekYearPos))]+"\n");
 		return sb.toString();
     }
 
@@ -119,10 +123,19 @@ public class DongziYear{
         "庚子","辛丑","壬寅","癸卯","甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥",
         "壬子","癸丑","甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥",
     };
+    public static long jiaziFromDzYearId(long dzYid) {
+        return ((dzYid+57)%60);//年甲子
+    }
+    public static long jiaziFromJzYearId(long jzYid) {
+        return ((jzYid%5)*12);//冬至月甲子，first su's jiazi id.
+    }
     //玄黄日推算甲子日
     public static int jiaziFromDay(long xhDayPosInput) {
         return (int)((xhDayPosInput+7)%60);
     }
+    public static long jiaziFromJzDayId(long jzDid) {//(jiaziFromDay(xh day))
+        return ((jzDid %5)*12);//日时辰起始甲子.first hour's jiazi id.
+    }    
     //玄黄日推算二十八星宿日
     public static int star28FromDay(long xhDayPosInput) {
         return (int)((xhDayPosInput+13)%28);
@@ -379,7 +392,7 @@ public class DongziYear{
 	public String toXuanhuangString() {
 		StringBuilder sb=new StringBuilder();
 		//sb.append("玄黄流日：#"+xhDay + " 流年#"+xhYearId+" 12/23 1/365\n");
-		sb.append("玄黄流年：#"+xhYearPos+" 参考拙历日月"+(jurefMonth+1) +"/"+(jurefDay+1));
+		sb.append("玄黄排年：#"+xhYearPos+" 对照拙劣日月"+(jurefMonth+1) +"/"+(jurefDay+1)+"\n");
 		return sb.toString();
 	}
 
@@ -610,7 +623,7 @@ public class DongziYear{
 			sb.append("西元纪年："+oliShowYear+"年");
 		else
 			sb.append("西前纪年："+(1-oliShowYear)+"年");
-		sb.append(""+oliShowMonth+"月"+oliShowDay+"日 #"+oliShowAccDays+" day");
+		sb.append(""+oliShowMonth+"月"+oliShowDay+"日 #"+oliShowAccDays+" day"+"\n");
 
 		return sb.toString();
 	}
@@ -732,12 +745,18 @@ public class DongziYear{
     }
 	public String toJulianString() {
 		StringBuilder sb=new StringBuilder();
-		sb.append("拙劣流年：#"+julianYear+" "+(julianMomth+1)+"/"+(julianDay+1)+" #"+julianStartAccDayPos+".5 day");
+		sb.append("拙劣流年：#"+julianYear+" "+(julianMomth+1)+"/"+(julianDay+1)+
+				" #"+julianStartAccDayPos+".5 day"+"\n");
 		return sb.toString();
 	}
 	public String toXiyuanString() {
 		StringBuilder sb=new StringBuilder();
-		sb.append("割利流年：#"+xiyuanYear+" "+(xiyuanMomth+1)+"/"+(xiyuanDay+1)+" #"+xiyuanStartAccDayPos+" day");
+		if(xiyuanYear>=0)
+			sb.append("苟利流年：#"+xiyuanYear+"年");
+		else
+			sb.append("苟前流年：#"+(-xiyuanYear)+"年");
+
+		sb.append(" "+(xiyuanMomth+1)+"/"+(xiyuanDay+1)+" #"+xiyuanStartAccDayPos+" day"+"\n");
 		return sb.toString();
 	}
 
@@ -828,12 +847,12 @@ public class DongziYear{
 	public String toSuString() {
 		StringBuilder sb=new StringBuilder();
 		sb.append("朔望阴历：冬月"+(suIsBig?"大":"小")+" "+(suDay+1)+"日，朔点："
-		    +secToTime(suSeconds)+" 至始朔积："+targetDayAcc);
+		    +secToTime(suSeconds)+" 至始朔积："+targetDayAcc+"\n");
 		return sb.toString();
 	}
 	public String toStageTableItemString() {
 		StringBuilder sb=new StringBuilder();
-		sb.append("查表基数："+dzYear+",  "+seekYearPos+",  "+dzSecond+",  "+targetDayAcc);
+		sb.append("生成查表："+dzYear+",  "+seekYearPos+",  "+dzSecond+",  "+targetDayAcc+"\n");
 		return sb.toString();
 	}
 	
@@ -861,35 +880,37 @@ public class DongziYear{
 		sec %=60;
 		return ""+hour+":"+minute+":"+sec;
 	}
-	public String toCompareString() {
+	public String toDZString() {
 		StringBuilder sb=new StringBuilder();
 		//sb.append("玄黄流日：#"+xhDay + " 流年#"+xhYearId+" 12/23 1/365\n");
-		sb.append("冬至流年：#"+dzYear+" 冬至点 "+secToTime(dzSecond) +" ("+dzSecond+")秒");
+		sb.append("冬至流年：#"+dzYear+" 冬至点 "+secToTime(dzSecond) +" ("+dzSecond+")秒\n");
 		return sb.toString();
 	}
 
     public void println(String string) {
-    	System.out.println(string);
+    	System.out.print(string+"\n");
+    }
+    public void print(String string) {
+    	System.out.print(string);
     }
     public void println(StringBuilder sb) {
     	System.out.println(sb.toString());
     }
 	public void test() {
 		int end=2762512;
-		int length=7000;
+		int length=70;
 		int start=end-length;
 		for(int i=start;i<end;i++) {
 			loadYear(i);
-			println("--------流年倒幕参照表  dzYear#"+i+" xhDay=#"+seekYearPos+" --------");
-			println(toSeekDzString());
-			println(toCompareString());
-			println(toXuanhuangString());
-			println(toJulianString());
-			println(toXiyuanString());
-			println(toOliString());
-			println(toSuString());
-			println(toStageTableItemString());
-			
+			print("--------玄黄历流年参照表  dzYear#"+i+" xhDay=#"+seekYearPos+" --------\n");
+			print(toZPositionTableString());
+			print(toDZString());
+			print(toXuanhuangString());
+			print(toJulianString());
+			print(toXiyuanString());
+			print(toOliString());
+			print(toSuString());
+			print(toStageTableItemString());
 			println("\n");
 		}
 	}
