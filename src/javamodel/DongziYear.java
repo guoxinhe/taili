@@ -1,4 +1,9 @@
-
+/**
+ * Debug method:Top menu->Run->Debug As->Java Application
+ * F5 enter, F6 over, F7 return, Ctrl+R to cursor.
+ * @author xinhe
+ *
+ */
 public class DongziYear{
 	//----------------冬至年部分
 	

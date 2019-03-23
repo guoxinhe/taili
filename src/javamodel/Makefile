@@ -1,13 +1,17 @@
 
-all: DongziYear
+PROJ=DongziYear
+LOG=test.log
 
-x: DongziYear
+all: $(PROJ)
+
+x: $(PROJ)
 	java $^
 
-go: DongziYear
-	java $^ >test.log
-	
-DongziYear: DongziYear.class
+go: $(PROJ)
+	java $^ >$(LOG)
+
+$(PROJ): $(PROJ).class
+
 
 %.class: %.java
 	javac $^
